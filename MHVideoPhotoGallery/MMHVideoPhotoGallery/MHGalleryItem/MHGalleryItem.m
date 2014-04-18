@@ -20,33 +20,52 @@
 }
 
 + (instancetype)itemWithVimeoVideoID:(NSString*)ID{
-    return [self.class.alloc initWithURL:[NSString stringWithFormat:MHVimeoBaseURL,ID]
+    return [self.class.alloc initWithURLString:[NSString stringWithFormat:MHVimeoBaseURL,ID]
                              galleryType:MHGalleryTypeVideo];
 }
 
 + (instancetype)itemWithYoutubeVideoID:(NSString*)ID{
-    return [self.class.alloc initWithURL:[NSString stringWithFormat:MHYoutubeBaseURL,ID]
+    return [self.class.alloc initWithURLString:[NSString stringWithFormat:MHYoutubeBaseURL,ID]
                              galleryType:MHGalleryTypeVideo];
 }
 
-+(instancetype)itemWithURL:(NSString *)URLString
++(instancetype)itemWithURL:(NSURL *)URL
                galleryType:(MHGalleryType)galleryType{
     
-    return [self.class.alloc initWithURL:URLString
+    return [self.class.alloc initWithURL:URL
                              galleryType:galleryType];
 }
 
-- (instancetype)initWithURL:(NSString*)URLString
+- (instancetype)initWithURL:(NSURL*)URL
                 galleryType:(MHGalleryType)galleryType{
     self = [super init];
     if (!self)
         return nil;
-    self.URLString = URLString;
+    self.URL = URL;
+    self.URLString=URL.absoluteString;
     self.description = nil;
     self.galleryType = galleryType;
     self.attributedString = nil;
     return self;
 }
+- (instancetype)initWithURLString:(NSString*)URLString
+                      galleryType:(MHGalleryType)galleryType{
+    self = [super init];
+    if (!self)
+        return nil;
+    self.URLString=URLString;
+    self.URL = [NSURL URLWithString:URLString];
+    self.description = nil;
+    self.galleryType = galleryType;
+    self.attributedString = nil;
+    return self;
+}
+
++ (instancetype)itemWithURLString:(NSString*)URLString
+                      galleryType:(MHGalleryType)galleryType{
+    return [self.class.alloc initWithURL:[NSURL URLWithString:URLString]];
+}
+
 
 +(instancetype)itemWithImage:(UIImage *)image{
     return [self.class.alloc initWithImage:image];

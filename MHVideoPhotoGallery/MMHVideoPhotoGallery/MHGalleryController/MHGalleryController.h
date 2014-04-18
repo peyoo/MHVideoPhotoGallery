@@ -14,6 +14,7 @@
 @class MHGalleryImageViewerViewController;
 @class MHGalleryItem;
 @class MHTransitionDismissMHGallery;
+@class MHShareItem;
 
 @protocol MHGalleryDelegate<NSObject>
 @optional
@@ -45,6 +46,8 @@
 - (id)initWithPresentationStyle:(MHGalleryViewMode)presentationStyle;
 
 @property (nonatomic, copy) void (^finishedCallback)(NSUInteger currentIndex,UIImage *image,MHTransitionDismissMHGallery *interactiveTransition,MHGalleryViewMode viewMode);
+
+@property(nonatomic,copy) BOOL(^BeginShare)(MHShareItem * shareItem);
 
 @end
 

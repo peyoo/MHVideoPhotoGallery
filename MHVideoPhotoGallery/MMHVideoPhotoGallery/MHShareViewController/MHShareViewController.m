@@ -19,7 +19,7 @@
 
 @implementation MHImageURL
 
-- (id)initWithURL:(NSString*)URL
+- (id)initWithURL:(NSURL*)URL
             image:(UIImage*)image{
     self = [super init];
     if (!self)
@@ -637,7 +637,9 @@
             if ([dataURL.image isKindOfClass:[UIImage class]] && !dataURL.image.images) {
                 [shareconntroller addImage:dataURL.image];
             }else{
-                videoURLS = [videoURLS stringByAppendingString:[NSString stringWithFormat: @"%@ \n",dataURL.URL]];
+                if (!dataURL.URL.isFileURL) {
+                    videoURLS = [videoURLS stringByAppendingString:[NSString stringWithFormat: @"%@ \n",dataURL.URL]];
+                }
             }
         }
         [shareconntroller setInitialText:videoURLS];
@@ -665,7 +667,7 @@
             if ([dataURL.image isKindOfClass:[UIImage class]]) {
                 UIImage *image = dataURL.image;
                 if (image.images) {
-                    [picker addAttachmentData:[NSData dataWithContentsOfFile:[SDImageCache.sharedImageCache defaultCachePathForKey:dataURL.URL]]
+                    [picker addAttachmentData:[NSData dataWithContentsOfFile:[SDImageCache.sharedImageCache defaultCachePathForKey:dataURL.URL.absoluteString]]
                                typeIdentifier:(__bridge NSString *)kUTTypeGIF
                                      filename:@"animated.gif"];
                 }else{
@@ -674,7 +676,11 @@
                                      filename:@"image.JPG"];
                 }
             }else{
-                videoURLS = [videoURLS stringByAppendingString:[NSString stringWithFormat: @"%@ \n",dataURL.URL]];
+                if (dataURL.URL.isFileURL) {
+                    [picker addAttachmentURL:dataURL.URL withAlternateFilename:@"video.mov"];
+                }else{
+                    videoURLS = [videoURLS stringByAppendingString:[NSString stringWithFormat: @"%@ \n",dataURL.URL]];
+                }
             }
         }
         picker.body = videoURLS;
@@ -696,7 +702,7 @@
             if ([dataURL.image isKindOfClass:[UIImage class]]) {
                 UIImage *image = dataURL.image;
                 if (image.images) {
-                    [picker addAttachmentData:[NSData dataWithContentsOfFile:[[SDImageCache sharedImageCache] defaultCachePathForKey:dataURL.URL]]
+                    [picker addAttachmentData:[NSData dataWithContentsOfFile:[[SDImageCache sharedImageCache] defaultCachePathForKey:dataURL.URL.absoluteString]]
                                      mimeType:@"image/gif"
                                      fileName:@"pic.gif"];
                 }else{
@@ -706,7 +712,13 @@
                 }
                 
             }else{
-                videoURLS = [videoURLS stringByAppendingString:[NSString stringWithFormat: @"%@ \n",dataURL.URL]];
+                if ([dataURL.URL isFileURL]) {
+                    NSData * data=[NSData dataWithContentsOfURL:dataURL.URL];
+                    [picker addAttachmentData:data mimeType:@"video/quicktime" fileName:@"video.mov"];
+                }else{
+                    videoURLS = [videoURLS stringByAppendingString:[NSString stringWithFormat: @"%@ \n",dataURL.URL]];
+                }
+                
             }
         }
         [picker setMessageBody:videoURLS isHTML:NO];
@@ -820,7 +832,7 @@
         
         if (item.galleryType == MHGalleryTypeVideo) {
             if (!saveToCameraRoll) {
-                MHImageURL *imageURL = [MHImageURL.alloc initWithURL:item.URLString image:nil];
+                MHImageURL *imageURL = [MHImageURL.alloc initWithURL:item.URL image:nil];
                 [weakSelf addDataToDownloadArray:imageURL];
             }else{
                 [MHGallerySharedManager.sharedManager getURLForMediaPlayer:item.URLString successBlock:^(NSURL *URL, NSError *error) {
@@ -864,7 +876,7 @@
                 [MHGallerySharedManager.sharedManager getImageFromAssetLibrary:item.URLString
                                                                      assetType:MHAssetImageTypeFull
                                                                   successBlock:^(UIImage *image, NSError *error) {
-                                                                      MHImageURL *imageURL = [MHImageURL.alloc initWithURL:item.URLString image:image];
+                                                                      MHImageURL *imageURL = [MHImageURL.alloc initWithURL:item.URL image:image];
                                                                       [weakSelf addDataToDownloadArray:imageURL];
                                                                   }];
             }else if (item.image) {
@@ -875,7 +887,7 @@
                                                         progress:nil
                                                        completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType, BOOL finished) {
                                                            
-                                                           MHImageURL *imageURL = [MHImageURL.alloc initWithURL:item.URLString image:image];
+                                                           MHImageURL *imageURL = [MHImageURL.alloc initWithURL:item.URL image:image];
                                                            
                                                            [weakSelf addDataToDownloadArray:imageURL];
                                                        }];
@@ -968,7 +980,7 @@
                 NSData *data = NSData.new;
                 
                 if (imageToStore.images) {
-                    data = [NSData dataWithContentsOfFile:[[SDImageCache sharedImageCache] defaultCachePathForKey:dataURL.URL]];
+                    data = [NSData dataWithContentsOfFile:[[SDImageCache sharedImageCache] defaultCachePathForKey:dataURL.URL.absoluteString]];
                 }else{
                     data = UIImageJPEGRepresentation(imageToStore, 1.0);
                 }
@@ -1009,12 +1021,16 @@
     }else{
         MHShareItem *item = self.shareDataSource[collectionView.tag][indexPath.row];
         
-        SEL selector = NSSelectorFromString(item.selectorName);
+        if (![self gallerViewController].BeginShare||[self gallerViewController].BeginShare(item)) {
+            SEL selector = NSSelectorFromString(item.selectorName);
+            
+            SuppressPerformSelectorLeakWarning(
+                                               [item.onViewController performSelector:selector
+                                                                           withObject:self.selectedRows];
+                                               );
+        }
         
-        SuppressPerformSelectorLeakWarning(
-                                           [item.onViewController performSelector:selector
-                                                                       withObject:self.selectedRows];
-                                           );
+        
         
         
     }

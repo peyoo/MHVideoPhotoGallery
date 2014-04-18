@@ -439,7 +439,7 @@
                         NSString *string = [dictionary[@"link"] firstObject][@"href"];
                         
                         string = [string stringByReplacingOccurrencesOfString:@"&feature=youtube_gdata" withString:@""];
-                        MHGalleryItem *item = [[MHGalleryItem alloc]initWithURL:string galleryType:MHGalleryTypeVideo];
+                        MHGalleryItem *item = [[MHGalleryItem alloc]initWithURLString:string galleryType:MHGalleryTypeVideo];
                         if (withTitle) {
                             item.description = dictionary[@"title"][@"$t"];
                         }

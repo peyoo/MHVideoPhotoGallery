@@ -46,7 +46,7 @@
         NSMutableArray *items = [NSMutableArray new];
         [group enumerateAssetsWithOptions:NSEnumerationReverse usingBlock:^(ALAsset *alAsset, NSUInteger index, BOOL *innerStop) {
             if (alAsset) {
-                MHGalleryItem *item = [[MHGalleryItem alloc]initWithURL:[alAsset.defaultRepresentation.url absoluteString]
+                MHGalleryItem *item = [[MHGalleryItem alloc]initWithURLString:[alAsset.defaultRepresentation.url absoluteString]
                                                             galleryType:MHGalleryTypeImage];
                 [items addObject:item];
             }
