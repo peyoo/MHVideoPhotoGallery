@@ -256,7 +256,7 @@
 }
 
 -(void)updateDescriptionLabelForIndex:(NSInteger)index{
-    if (index < self.numberOfGalleryItems) {
+    if (index>=0&&index < self.numberOfGalleryItems) {
         MHGalleryItem *item = [self itemForIndex:index];
         self.descriptionView.text = item.description;
         
@@ -292,6 +292,12 @@
     }
     if (scrollView.contentOffset.x < self.view.frame.size.width/2) {
         pageIndex--;
+    }
+    if (pageIndex<0) {
+        pageIndex=0;
+    }
+    if (pageIndex>=self.numberOfGalleryItems) {
+        pageIndex=self.numberOfGalleryItems-1;
     }
     [self updateDescriptionLabelForIndex:pageIndex];
     [self updateTitleForIndex:pageIndex];
