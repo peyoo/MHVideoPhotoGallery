@@ -91,6 +91,15 @@
     
     if (!self.UICustomization.showOverView) {
         self.navigationItem.hidesBackButton = YES;
+    }else{
+        if (self.galleryViewController.UICustomization.backButtonState == MHBackButtonStateWithoutBackArrow) {
+            UIBarButtonItem *backBarButton = [UIBarButtonItem.alloc initWithImage:[MHGalleryImage(@"ic_square") imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate]
+                                                                            style:UIBarButtonItemStyleBordered
+                                                                           target:self
+                                                                           action:@selector(backButtonAction)];
+            self.navigationItem.hidesBackButton = YES;
+            self.navigationItem.leftBarButtonItem = backBarButton;
+        }
     }
     
     UIBarButtonItem *doneBarButton =  [UIBarButtonItem.alloc initWithBarButtonSystemItem:UIBarButtonSystemItemDone
@@ -139,7 +148,6 @@
                                                            target:self
                                                            action:@selector(playStopButtonPressed)];
     
-    
     self.leftBarButton = [UIBarButtonItem.alloc initWithImage:MHGalleryImage(@"left_arrow")
                                                         style:UIBarButtonItemStyleBordered
                                                        target:self
@@ -153,6 +161,13 @@
     self.shareBarButton = [UIBarButtonItem.alloc initWithBarButtonSystemItem:UIBarButtonSystemItemAction
                                                                       target:self
                                                                       action:@selector(sharePressed)];
+    
+    if (self.UICustomization.hideShare) {
+        self.shareBarButton = [UIBarButtonItem.alloc initWithBarButtonSystemItem:UIBarButtonSystemItemFixedSpace
+                                                                          target:self
+                                                                          action:nil];
+    }
+    
     [self updateToolBarForItem:item];
     
     if (self.pageIndex == 0) {
@@ -191,6 +206,11 @@
     
     [self updateTitleForIndex:self.pageIndex];
 }
+-(void)backButtonAction{
+    [self.navigationController popToRootViewControllerAnimated:YES];
+    
+}
+
 
 -(UIInterfaceOrientation)currentOrientation{
     return UIApplication.sharedApplication.statusBarOrientation;
@@ -205,7 +225,7 @@
 }
 
 -(MHGalleryController*)galleryViewController{
-    if ([self.navigationController isKindOfClass:[MHGalleryController class]]) {
+    if ([self.navigationController isKindOfClass:MHGalleryController.class]) {
         return (MHGalleryController*)self.navigationController;
     }
     return nil;
@@ -217,7 +237,7 @@
             return YES;
         }
     }
-    return ([touch.view isKindOfClass:[UIControl class]] == NO);
+    return ([touch.view isKindOfClass:UIControl.class] == NO);
 }
 
 -(void)changeToPlayButton{
@@ -249,7 +269,7 @@
         [self.navigationController pushViewController:share
                                              animated:YES];
     }else{
-        UIActivityViewController *act = [UIActivityViewController.alloc initWithActivityItems:@[[(MHImageViewController*)[self.pageViewController.viewControllers firstObject] imageView].image] applicationActivities:nil];
+        UIActivityViewController *act = [UIActivityViewController.alloc initWithActivityItems:@[[(MHImageViewController*)self.pageViewController.viewControllers.firstObject imageView].image] applicationActivities:nil];
         [self presentViewController:act animated:YES completion:nil];
         
     }
@@ -275,9 +295,9 @@
     }
 }
 
-
 -(void)scrollViewDidEndDecelerating:(UIScrollView *)scrollView{
     self.userScrolls = NO;
+    [self updateTitleAndDescriptionForScrollView:scrollView];
 }
 
 -(void)scrollViewWillBeginDragging:(UIScrollView *)scrollView{
@@ -285,8 +305,11 @@
 }
 
 -(void)scrollViewDidScroll:(UIScrollView *)scrollView{
-    
-    NSInteger pageIndex =self.pageIndex;
+    [self updateTitleAndDescriptionForScrollView:scrollView];
+}
+
+-(void)updateTitleAndDescriptionForScrollView:(UIScrollView*)scrollView{
+    NSInteger pageIndex = self.pageIndex;
     if (scrollView.contentOffset.x > (self.view.frame.size.width+self.view.frame.size.width/2)) {
         pageIndex++;
     }
@@ -301,7 +324,6 @@
     }
     [self updateDescriptionLabelForIndex:pageIndex];
     [self updateTitleForIndex:pageIndex];
-    
 }
 
 -(void)updateTitleForIndex:(NSInteger)pageIndex{
@@ -348,11 +370,17 @@
     UIBarButtonItem *flex = [UIBarButtonItem.alloc initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace
                                                                         target:self
                                                                         action:nil];
+    
+    UIBarButtonItem *fixed = [UIBarButtonItem.alloc initWithBarButtonSystemItem:UIBarButtonSystemItemFixedSpace
+                                                                        target:self
+                                                                        action:nil];
+    fixed.width = 30;
+    
     if (item.galleryType == MHGalleryTypeVideo) {
         [self changeToPlayButton];
-        self.toolbar.items = @[self.shareBarButton,flex,self.leftBarButton,flex,self.playStopBarButton,flex,self.rightBarButton,flex];
+        self.toolbar.items = @[self.shareBarButton,flex,self.leftBarButton,flex,self.playStopBarButton,flex,self.rightBarButton,flex,fixed];
     }else{
-        self.toolbar.items =@[self.shareBarButton,flex,self.leftBarButton,flex,self.rightBarButton,flex];
+        self.toolbar.items =@[self.shareBarButton,flex,self.leftBarButton,flex,self.rightBarButton,flex,fixed];
     }
 }
 
@@ -360,7 +388,7 @@
 
 - (id<UIViewControllerInteractiveTransitioning>)navigationController:(UINavigationController *)navigationController
                          interactionControllerForAnimationController:(id<UIViewControllerAnimatedTransitioning>)animationController {
-    if ([animationController isKindOfClass:[MHTransitionShowOverView class]]) {
+    if ([animationController isKindOfClass:MHTransitionShowOverView.class]) {
         MHImageViewController *imageViewController = self.pageViewController.viewControllers.firstObject;
         return imageViewController.interactiveOverView;
     }else {
@@ -400,12 +428,13 @@
     if (indexPage-1 == 0) {
         self.leftBarButton.enabled = NO;
     }
-    __block MHGalleryImageViewerViewController*blockSelf = self;
     
+    __weak typeof(self) weakSelf = self;
+
     [self.pageViewController setViewControllers:@[imageViewController] direction:UIPageViewControllerNavigationDirectionReverse animated:YES completion:^(BOOL finished) {
-        blockSelf.pageIndex = imageViewController.pageIndex;
-        [blockSelf updateToolBarForItem:[blockSelf itemForIndex:blockSelf.pageIndex]];
-        [blockSelf showCurrentIndex:blockSelf.pageIndex];
+        weakSelf.pageIndex = imageViewController.pageIndex;
+        [weakSelf updateToolBarForItem:[weakSelf itemForIndex:weakSelf.pageIndex]];
+        [weakSelf showCurrentIndex:weakSelf.pageIndex];
     }];
 }
 
@@ -420,14 +449,15 @@
     if (indexPage+1 == self.numberOfGalleryItems-1) {
         self.rightBarButton.enabled = NO;
     }
-    __block MHGalleryImageViewerViewController*blockSelf = self;
+    __weak typeof(self) weakSelf = self;
     
     [self.pageViewController setViewControllers:@[imageViewController] direction:UIPageViewControllerNavigationDirectionForward animated:YES completion:^(BOOL finished) {
-        blockSelf.pageIndex = imageViewController.pageIndex;
-        [blockSelf updateToolBarForItem:[blockSelf itemForIndex:blockSelf.pageIndex]];
-        [blockSelf showCurrentIndex:blockSelf.pageIndex];
+        weakSelf.pageIndex = imageViewController.pageIndex;
+        [weakSelf updateToolBarForItem:[weakSelf itemForIndex:weakSelf.pageIndex]];
+        [weakSelf showCurrentIndex:weakSelf.pageIndex];
     }];
 }
+
 -(void)showCurrentIndex:(NSInteger)currentIndex{
     if ([self.galleryViewController.galleryDelegate respondsToSelector:@selector(galleryController:didShowIndex:)]) {
         [self.galleryViewController.galleryDelegate galleryController:self.galleryViewController
@@ -516,8 +546,8 @@
 @property (nonatomic, strong) UILabel                  *rightSliderLabel;
 @property (nonatomic, strong) NSTimer                  *movieTimer;
 @property (nonatomic, strong) NSTimer                  *movieDownloadedTimer;
-@property (nonatomic,strong ) UIPanGestureRecognizer   *pan;
-@property (nonatomic,strong ) MHPinchGestureRecognizer *pinch;
+@property (nonatomic, strong) UIPanGestureRecognizer   *pan;
+@property (nonatomic, strong) MHPinchGestureRecognizer *pinch;
 
 @property (nonatomic)         NSInteger                wholeTimeMovie;
 @property (nonatomic)         CGPoint                  pointToCenterAfterResize;
@@ -804,6 +834,7 @@
         
         
         if (self.item.galleryType == MHGalleryTypeImage) {
+
             
             [self.imageView setImageForMHGalleryItem:self.item imageType:MHImageTypeFull successBlock:^(UIImage *image, NSError *error) {
                 if (!image) {
@@ -814,18 +845,17 @@
             }];
             
         }else{
-            
-            [[MHGallerySharedManager sharedManager] startDownloadingThumbImage:self.item.URLString
-                                                                  successBlock:^(UIImage *image,NSUInteger videoDuration,NSError *error) {
-                                                                      if (!error) {
-                                                                          [weakSelf handleGeneratedThumb:image
-                                                                                           videoDuration:videoDuration
-                                                                                               urlString:self.item.URLString];
-                                                                      }else{
-                                                                          [weakSelf changeToErrorImage];
-                                                                      }
-                                                                      [weakSelf.act stopAnimating];
-                                                                  }];
+            [MHGallerySharedManager.sharedManager startDownloadingThumbImage:self.item.URLString
+                                                                successBlock:^(UIImage *image,NSUInteger videoDuration,NSError *error) {
+                                                                    if (!error) {
+                                                                        [weakSelf handleGeneratedThumb:image
+                                                                                         videoDuration:videoDuration
+                                                                                             urlString:self.item.URLString];
+                                                                    }else{
+                                                                        [weakSelf changeToErrorImage];
+                                                                    }
+                                                                    [weakSelf.act stopAnimating];
+                                                                }];
         }
     }
     
@@ -884,7 +914,7 @@
 }
 -(BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldBeRequiredToFailByGestureRecognizer:(UIGestureRecognizer *)otherGestureRecognizer{
     if (self.interactiveOverView) {
-        if ([gestureRecognizer isKindOfClass:[MHPinchGestureRecognizer class]]) {
+        if ([gestureRecognizer isKindOfClass:MHPinchGestureRecognizer.class]) {
             return YES;
         }
         return NO;
@@ -897,7 +927,7 @@
     }
     if (self.viewController.transitionCustomization.dismissWithScrollGestureOnFirstAndLastImage) {
         if ((self.pageIndex ==0 || self.pageIndex == self.viewController.numberOfGalleryItems -1)) {
-            if ([gestureRecognizer isKindOfClass:[UIPanGestureRecognizer class]]|| [otherGestureRecognizer isKindOfClass:NSClassFromString(@"UIScrollViewDelayedTouchesBeganGestureRecognizer")] ) {
+            if ([gestureRecognizer isKindOfClass:UIPanGestureRecognizer.class]|| [otherGestureRecognizer isKindOfClass:NSClassFromString(@"UIScrollViewDelayedTouchesBeganGestureRecognizer")] ) {
                 return YES;
             }
         }
@@ -907,14 +937,14 @@
 -(BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldReceiveTouch:(UITouch *)touch{
     
     if (self.interactiveOverView) {
-        if ([gestureRecognizer isKindOfClass:[MHPinchGestureRecognizer class]]) {
+        if ([gestureRecognizer isKindOfClass:MHPinchGestureRecognizer.class]) {
             return YES;
         }else{
             return NO;
         }
     }else{
-        if ([gestureRecognizer isKindOfClass:[MHPinchGestureRecognizer class]]) {
-            if ([gestureRecognizer isKindOfClass:[MHPinchGestureRecognizer class]] && self.scrollView.zoomScale ==1) {
+        if ([gestureRecognizer isKindOfClass:MHPinchGestureRecognizer.class]) {
+            if ([gestureRecognizer isKindOfClass:MHPinchGestureRecognizer.class] && self.scrollView.zoomScale ==1) {
                 return YES;
             }else{
                 return NO;
@@ -937,7 +967,6 @@
     }
     if (self.viewController.transitionCustomization.dismissWithScrollGestureOnFirstAndLastImage) {
         if ((self.pageIndex ==0 || self.pageIndex == self.viewController.numberOfGalleryItems -1) && [gestureRecognizer isKindOfClass:UIPanGestureRecognizer.class]) {
-            
             return YES;
         }
     }
@@ -1108,14 +1137,14 @@
     
     self.playingVideo =NO;
     
-    [[NSNotificationCenter defaultCenter] removeObserver:self
+    [NSNotificationCenter.defaultCenter removeObserver:self
                                                     name:MPMoviePlayerLoadStateDidChangeNotification
                                                   object:self.moviePlayer];
     
-    [[NSNotificationCenter defaultCenter] removeObserver:self
+    [NSNotificationCenter.defaultCenter removeObserver:self
                                                     name:MPMoviePlayerPlaybackDidFinishNotification
                                                   object:self.moviePlayer];
-    [[NSNotificationCenter defaultCenter] removeObserver:self
+    [NSNotificationCenter.defaultCenter removeObserver:self
                                                     name:MPMoviePlayerPlaybackStateDidChangeNotification
                                                   object:self.moviePlayer];
     
@@ -1162,12 +1191,12 @@
     self.moviePlayer.controlStyle = MPMovieControlStyleNone;
     self.moviePlayer.contentURL = URL;
     
-    [[NSNotificationCenter defaultCenter] addObserver:self
+    [NSNotificationCenter.defaultCenter addObserver:self
                                              selector:@selector(loadStateDidChange:)
                                                  name:MPMoviePlayerLoadStateDidChangeNotification
                                                object:self.moviePlayer];
     
-    [[NSNotificationCenter defaultCenter] addObserver:self
+    [NSNotificationCenter.defaultCenter addObserver:self
                                              selector:@selector(moviePlayBackDidFinish:)
                                                  name:MPMoviePlayerPlaybackDidFinishNotification
                                                object:self.moviePlayer];
@@ -1187,7 +1216,7 @@
                                                       userInfo:nil
                                                        repeats:YES];
     
-    [[NSRunLoop currentRunLoop] addTimer:self.movieDownloadedTimer forMode:NSRunLoopCommonModes];
+    [NSRunLoop.currentRunLoop addTimer:self.movieDownloadedTimer forMode:NSRunLoopCommonModes];
     
     [self changeToPlayable];
 }
@@ -1223,7 +1252,7 @@
                                                     selector:@selector(movieTimerChanged:)
                                                     userInfo:nil
                                                      repeats:YES];
-            [[NSRunLoop currentRunLoop] addTimer:self.movieTimer forMode:NSRunLoopCommonModes];
+            [NSRunLoop.currentRunLoop addTimer:self.movieTimer forMode:NSRunLoopCommonModes];
         }
         
     }else{
@@ -1269,7 +1298,7 @@
         self.leftSliderLabel.frame = CGRectMake(8, 0, 40, 43);
         self.rightSliderLabel.frame =CGRectMake(self.viewController.view.bounds.size.width-50, 0, 50, 43);
         
-        if([UIApplication sharedApplication].statusBarOrientation != UIInterfaceOrientationPortrait){
+        if(UIApplication.sharedApplication.statusBarOrientation != UIInterfaceOrientationPortrait){
             if (self.view.bounds.size.width < self.view.bounds.size.height) {
                 self.rightSliderLabel.frame =CGRectMake(self.view.bounds.size.height-50, 0, 50, 43);
                 if (self.imageView.image) {
@@ -1280,7 +1309,7 @@
         
         self.moviePlayerToolBarTop.frame =CGRectMake(0,64, self.view.frame.size.width, 44);
         if (!MHISIPAD) {
-            if ([UIApplication sharedApplication].statusBarOrientation != UIInterfaceOrientationPortrait) {
+            if (UIApplication.sharedApplication.statusBarOrientation != UIInterfaceOrientationPortrait) {
                 self.moviePlayerToolBarTop.frame =CGRectMake(0,52, self.view.frame.size.width, 44);
             }
         }
@@ -1302,7 +1331,6 @@
     self.viewController.descriptionView.alpha =alpha;
     self.viewController.descriptionViewBackground.alpha =alpha;
     self.viewController.statusBarObject.alpha =alpha;
-    
 }
 
 -(void)handelImageTap:(UIGestureRecognizer *)gestureRecognizer{

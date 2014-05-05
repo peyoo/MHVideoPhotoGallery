@@ -16,6 +16,7 @@
 #import "MHGallerySharedManagerPrivate.h"
 #import "SDImageCache.h"
 #import <MobileCoreServices/UTCoreTypes.h>
+#import "MHGallery.h"
 
 @implementation MHImageURL
 
@@ -28,13 +29,6 @@
     self.image = image;
     return self;
 }
-
-@end
-
-@interface SDImageCache (MHPrivateMethods)
-
-- (NSString *)defaultCachePathForKey:(NSString *)key;
-- (NSString *)cachedFileNameForKey:(NSString *)key;
 
 @end
 
@@ -200,20 +194,20 @@
 
 
 @interface MHShareViewController ()
-@property(nonatomic,strong) MHDownloadView *downloadView;
-@property(nonatomic,strong) NSMutableArray *shareDataSource;
-@property(nonatomic,strong) NSArray *shareDataSourceStart;
-@property(nonatomic,strong) NSMutableArray *selectedRows;
-@property(nonatomic)        CGFloat startPointScroll;
-@property(nonatomic,strong) MHShareItem *saveObject;
-@property(nonatomic,strong) MHShareItem *mailObject;
-@property(nonatomic,strong) MHShareItem *messageObject;
-@property(nonatomic,strong) MHShareItem *twitterObject;
-@property(nonatomic,strong) MHShareItem *faceBookObject;
-@property(nonatomic,getter = isShowingShareViewInLandscapeMode) BOOL showingShareViewInLandscapeMode;
-@property (nonatomic)         NSInteger saveCount;
-@property (nonatomic,strong)  NSMutableArray *dataDownload;
-@property (nonatomic,strong)  NSMutableArray *sessions;
+@property (nonatomic,strong) MHDownloadView *downloadView;
+@property (nonatomic,strong) NSMutableArray *shareDataSource;
+@property (nonatomic,strong) NSArray *shareDataSourceStart;
+@property (nonatomic,strong) NSMutableArray *selectedRows;
+@property (nonatomic)        CGFloat startPointScroll;
+@property (nonatomic,strong) MHShareItem *saveObject;
+@property (nonatomic,strong) MHShareItem *mailObject;
+@property (nonatomic,strong) MHShareItem *messageObject;
+@property (nonatomic,strong) MHShareItem *twitterObject;
+@property (nonatomic,strong) MHShareItem *faceBookObject;
+@property (nonatomic,getter = isShowingShareViewInLandscapeMode) BOOL showingShareViewInLandscapeMode;
+@property (nonatomic)        NSInteger saveCounter;
+@property (nonatomic,strong) NSMutableArray *dataDownload;
+@property (nonatomic,strong) NSMutableArray *sessions;
 
 @end
 
@@ -350,10 +344,10 @@
     self.toolbar = [UIToolbar.alloc initWithFrame:self.gradientView.frame];
     [self.view addSubview:self.toolbar];
     
-    CAGradientLayer *gradient = [CAGradientLayer layer];
+    CAGradientLayer *gradient = CAGradientLayer.layer;
     gradient.frame = self.gradientView.bounds;
-    gradient.colors = @[(id)[[UIColor colorWithRed:0.97 green:0.97 blue:0.97 alpha:1] CGColor],
-                        (id)[[UIColor colorWithRed:0.97 green:0.97 blue:0.97 alpha:1] CGColor]];
+    gradient.colors = @[(id)[UIColor colorWithRed:0.97 green:0.97 blue:0.97 alpha:1].CGColor,
+                        (id)[UIColor colorWithRed:0.97 green:0.97 blue:0.97 alpha:1].CGColor];
     
     [self.gradientView.layer insertSublayer:gradient atIndex:0];
     [self.view addSubview:self.gradientView];
@@ -501,37 +495,17 @@
 }
 
 -(void)makeOverViewDetailCell:(MHMediaPreviewCollectionViewCell*)cell atIndexPath:(NSIndexPath*)indexPath{
-    __block MHMediaPreviewCollectionViewCell *blockCell = cell;
     
     MHGalleryItem *item = [self itemForIndex:indexPath.row];
+    
     cell.videoDurationLength.text = @"";
     cell.videoIcon.hidden = YES;
     cell.videoGradient.hidden = YES;
     cell.thumbnail.image = nil;
-    
-    if (item.galleryType == MHGalleryTypeImage) {
-        
-        [cell.thumbnail setImageForMHGalleryItem:item imageType:MHImageTypeFull successBlock:^(UIImage *image, NSError *error) {
-            if (!image) {
-                blockCell.thumbnail.image = MHGalleryImage(@"error");
-            }
-        }];
-    }else{
-        [MHGallerySharedManager.sharedManager startDownloadingThumbImage:item.URLString
-                                                            successBlock:^(UIImage *image,NSUInteger videoDuration,NSError *error) {
-                                                                if (error) {
-                                                                    blockCell.thumbnail.image = MHGalleryImage(@"error");
-                                                                }else{
-                                                                    blockCell.videoDurationLength.text = [MHGallerySharedManager stringForMinutesAndSeconds:videoDuration addMinus:NO];
-                                                                    blockCell.thumbnail.image =image;
-                                                                    blockCell.videoIcon.hidden =NO;
-                                                                    blockCell.videoGradient.hidden =NO;
-                                                                }
-                                                            }];
-    }
-    
+    cell.galleryItem = item;
+    cell.thumbnail.backgroundColor = [UIColor colorWithWhite:0 alpha:0.1];
     cell.thumbnail.contentMode = UIViewContentModeScaleAspectFill;
-    cell.selectionImageView.hidden =NO;
+    cell.selectionImageView.hidden = NO;
     
     cell.selectionImageView.layer.borderWidth =1;
     cell.selectionImageView.layer.cornerRadius =11;
@@ -625,7 +599,7 @@
     
     [self getAllImagesForSelectedRows:^(NSArray *images){
         SLComposeViewController *shareconntroller=[SLComposeViewController composeViewControllerForServiceType:serviceType];
-        SLComposeViewControllerCompletionHandler __block completionHandler=^(SLComposeViewControllerResult result){
+        SLComposeViewControllerCompletionHandler completionHandler=^(SLComposeViewControllerResult result){
             
             [shareconntroller dismissViewControllerAnimated:YES
                                                  completion:^{
@@ -750,9 +724,9 @@
                                    }];
 }
 
--(void)setSaveCount:(NSInteger)saveCount{
+-(void)setSaveCounter:(NSInteger)saveCounter{
     dispatch_async(dispatch_get_main_queue(), ^{
-        if (saveCount == self.selectedRows.count) {
+        if (saveCounter == self.selectedRows.count) {
             UIApplication.sharedApplication.networkActivityIndicatorVisible = NO;
             if (self.downloadView) {
                 [self removeBlurBlurBackgorundToolbarFromSuperView:^(BOOL complition) {
@@ -764,9 +738,10 @@
                 self.finishedCallbackDownloadData(self.dataDownload);
             }
         }
-        [self.downloadView attributedStringForDownloadLabelWithDownloadedDataNumber:@(saveCount) maxNumber:@(self.selectedRows.count)];
+        [self.downloadView attributedStringForDownloadLabelWithDownloadedDataNumber:@(saveCounter)
+                                                                          maxNumber:@(self.selectedRows.count)];
     });
-    _saveCount = saveCount;
+    _saveCounter = saveCounter;
 }
 -(void)removeBlurBlurBackgorundToolbarFromSuperView:(void(^)(BOOL complition))SuccessBlock{
     [UIView animateWithDuration:0.3 animations:^{
@@ -780,7 +755,7 @@
 }
 -(void)addDataToDownloadArray:(id)data{
     [self.dataDownload addObject:data];
-    self.saveCount++;
+    self.saveCounter++;
 }
 
 
@@ -823,7 +798,7 @@
     
     self.finishedCallbackDownloadData = SuccessBlock;
     
-    self.saveCount =0;
+    self.saveCounter =0;
     
     __weak typeof(self) weakSelf = self;
     
@@ -838,11 +813,10 @@
                 [MHGallerySharedManager.sharedManager getURLForMediaPlayer:item.URLString successBlock:^(NSURL *URL, NSError *error) {
                     NSURLSession *session = [NSURLSession sessionWithConfiguration:NSURLSessionConfiguration.defaultSessionConfiguration];
                     
-                    __block NSURLSession *blockSession = session;
                     [self.sessions addObject:session];
                     [[session downloadTaskWithURL:URL completionHandler:^(NSURL *location, NSURLResponse *response, NSError *error) {
                         if (error){
-                            weakSelf.saveCount++;
+                            weakSelf.saveCounter++;
                             return;
                         }
                         NSURL *documentsURL = [[NSFileManager.defaultManager URLsForDirectory:NSDocumentDirectory inDomains:NSUserDomainMask] firstObject];
@@ -852,7 +826,7 @@
                         [NSFileManager.defaultManager moveItemAtURL:location toURL:tempURL error:&moveItemError];
                         
                         if (moveItemError) {
-                            weakSelf.saveCount++;
+                            weakSelf.saveCounter++;
                             return;
                         }
                         ALAssetsLibrary* library = ALAssetsLibrary.new;
@@ -861,8 +835,8 @@
                                                         NSError *removeError =nil;
                                                         [NSFileManager.defaultManager removeItemAtURL:tempURL error:&removeError];
                                                         
-                                                        [weakSelf.sessions removeObject:blockSession];
-                                                        weakSelf.saveCount++;
+                                                        [weakSelf.sessions removeObject:session];
+                                                        weakSelf.saveCounter++;
                                                     }];
                     }] resume];
                 }];

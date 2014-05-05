@@ -19,10 +19,13 @@ typedef NS_ENUM(NSUInteger, MHGalleryType) {
 @property (nonatomic,strong) UIImage            *image;
 @property (nonatomic,strong) NSURL              *URL;
 @property (nonatomic,strong) NSString           *URLString;
+/**
+ *  Thumbs are automatically generated for Videos. But you can set Thumb Images for GalleryTypeImage.
+ */
+@property (nonatomic,strong) NSString           *thumbnailURL;
 @property (nonatomic,strong) NSString           *description;
 @property (nonatomic,strong) NSAttributedString *attributedString;
 @property (nonatomic,assign) MHGalleryType       galleryType;
-
 /**
  *  MHGalleryItem initWithURL:galleryType
  *
@@ -30,7 +33,7 @@ typedef NS_ENUM(NSUInteger, MHGalleryType) {
  *  @param galleryType select to Type, video or image
  *
  */
-- (instancetype)initWithURL:(NSURL*)URLString
+- (instancetype)initWithURL:(NSURL*)URL
                 galleryType:(MHGalleryType)galleryType;
 
 + (instancetype)itemWithURL:(NSURL*)URLString

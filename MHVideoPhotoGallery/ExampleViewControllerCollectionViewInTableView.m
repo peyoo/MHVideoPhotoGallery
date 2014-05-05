@@ -49,7 +49,7 @@
     [super viewDidLoad];
     
     
-    self.title = @"CollectionInTable";
+    self.title = @"CollectionView";
     
     MHGalleryItem *localVideo = [MHGalleryItem.alloc initWithURLString:[[NSURL fileURLWithPath:[[NSBundle mainBundle] pathForResource:@"Sydney-iPhone" ofType:@"m4v"]] absoluteString]
                                                       galleryType:MHGalleryTypeVideo];
@@ -128,6 +128,7 @@
     MHGalleryItem *landschaft22 = [MHGalleryItem.alloc initWithURLString:@"http://i.imgur.com/d86g7Ps.gif"
                                                         galleryType:MHGalleryTypeImage];
 
+
     
     
     NSMutableAttributedString *string = [[NSMutableAttributedString alloc]initWithString:@"Awesome!!\nOr isn't it?"];
@@ -145,8 +146,7 @@
     [self.tableView reloadData];
     
     [self setNeedsStatusBarAppearanceUpdate];
-    
-
+        
 }
 
 
@@ -231,14 +231,14 @@
     
     NSArray *galleryData = self.galleryDataSource[collectionView.tag];
     
-    MHGalleryController *gallery = [MHGalleryController.alloc initWithPresentationStyle:MHGalleryViewModeImageViewerNavigationBarShown];
+    MHGalleryController *gallery = [MHGalleryController galleryWithPresentationStyle:MHGalleryViewModeImageViewerNavigationBarShown];
     gallery.galleryItems = galleryData;
     gallery.presentingFromImageView = imageView;
     gallery.presentationIndex = indexPath.row;
     
-  //  gallery.galleryDelegate = self;
-  //  gallery.dataSource = self;
-    __block MHGalleryController *blockGallery = gallery;
+    //  gallery.galleryDelegate = self;
+    //  gallery.dataSource = self;
+    __weak MHGalleryController *blockGallery = gallery;
     
     gallery.finishedCallback = ^(NSUInteger currentIndex,UIImage *image,MHTransitionDismissMHGallery *interactiveTransition,MHGalleryViewMode viewMode){
         if (viewMode == MHGalleryViewModeOverView) {
@@ -281,7 +281,8 @@
 
 -(MHGalleryItem *)itemForIndex:(NSInteger)index{
     // You also have to set the image in the Testcell to get the correct Animation
-    return [MHGalleryItem.alloc initWithImage:[UIImage imageNamed:@"twitterMH"]];
+    //    return [MHGalleryItem.alloc initWithImage:nil];
+    return [MHGalleryItem itemWithImage:[UIImage imageNamed:@"twitterMH"]];
 }
 
 -(NSUInteger)supportedInterfaceOrientations{
@@ -294,7 +295,7 @@
 
 -(void)makeOverViewDetailCell:(MHMediaPreviewCollectionViewCell*)cell atIndexPath:(NSIndexPath*)indexPath{
     MHGalleryItem *item = self.galleryDataSource[indexPath.section][indexPath.row];
-    [cell.thumbnail setContentMode:UIViewContentModeScaleAspectFill];
+    cell.thumbnail.contentMode = UIViewContentModeScaleAspectFill;
     
     cell.thumbnail.layer.shadowOffset = CGSizeMake(0, 0);
     cell.thumbnail.layer.shadowRadius = 1.0;
@@ -304,18 +305,7 @@
     cell.thumbnail.layer.cornerRadius = 2.0;
     
     cell.thumbnail.image = nil;
-    if (item.galleryType == MHGalleryTypeImage) {
-        if (item.image) {
-            cell.thumbnail.image = item.image;
-        }else{
-            [cell.thumbnail setImageWithURL:[NSURL URLWithString:item.URLString]];
-        }
-    }else{
-        [MHGallerySharedManager.sharedManager startDownloadingThumbImage:item.URLString
-                                                              successBlock:^(UIImage *image, NSUInteger videoDuration, NSError *error) {
-                                                                  cell.thumbnail.image = image;
-                                                              }];
-    }
+    cell.galleryItem = item;
 }
 
 

@@ -309,7 +309,7 @@
                                                }else if (self.youtubeThumbQuality == MHYoutubeThumbQualitySQ){
                                                    thumbURL = jsonData[@"data"][@"thumbnail"][@"sqDefault"];
                                                }
-                                               [[SDWebImageManager sharedManager] downloadWithURL:[NSURL URLWithString:thumbURL]
+                                               [SDWebImageManager.sharedManager downloadWithURL:[NSURL URLWithString:thumbURL]
                                                                                           options:SDWebImageContinueInBackground
                                                                                          progress:nil
                                                                                         completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType, BOOL finished) {
@@ -358,7 +358,7 @@
                                        dispatch_async(dispatch_get_main_queue(), ^(void){
                                            if (jsonData.count) {
                                                
-                                               __block NSString *quality = NSString.new;
+                                               NSString *quality = NSString.new;
                                                if (self.vimeoThumbQuality == MHVimeoThumbQualityLarge) {
                                                    quality = @"thumbnail_large";
                                                } else if (self.vimeoThumbQuality == MHVimeoThumbQualityMedium){
@@ -371,7 +371,7 @@
                                                    dictToSave[vimdeoURLString] = @([jsonData[0][@"duration"] integerValue]);
                                                    [self setObjectToUserDefaults:dictToSave];
                                                    
-                                                   [[SDWebImageManager sharedManager] downloadWithURL:[NSURL URLWithString:jsonData[0][quality]]
+                                                   [SDWebImageManager.sharedManager downloadWithURL:[NSURL URLWithString:jsonData[0][quality]]
                                                                                               options:SDWebImageContinueInBackground
                                                                                              progress:nil
                                                                                             completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType, BOOL finished) {
@@ -466,25 +466,6 @@
         return [NSString stringWithFormat:@"-%@",string];
     }
     return string;
-}
-
-+ (UIImage *)imageByRenderingView:(id)view{
-    CGFloat scale = 1.0;
-    if([UIScreen.mainScreen respondsToSelector:@selector(scale)]) {
-        CGFloat tmp = UIScreen.mainScreen.scale;
-        if (tmp > 1.5) {
-            scale = 2.0;
-        }
-    }
-    if(scale > 1.5) {
-        UIGraphicsBeginImageContextWithOptions([view bounds].size, NO, scale);
-    } else {
-        UIGraphicsBeginImageContext([view bounds].size);
-    }
-    [[view layer] renderInContext:UIGraphicsGetCurrentContext()];
-    UIImage *resultingImage = UIGraphicsGetImageFromCurrentImageContext();
-    UIGraphicsEndImageContext();
-    return resultingImage;
 }
 
 @end

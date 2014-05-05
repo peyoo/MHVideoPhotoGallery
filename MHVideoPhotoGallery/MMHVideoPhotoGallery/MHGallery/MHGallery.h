@@ -33,6 +33,7 @@ extern NSBundle *MHGalleryBundle(void);
 extern NSString *MHGalleryLocalizedString(NSString *localizeString);
 extern UIImage  *MHGalleryImage(NSString *imageName);
 extern NSDictionary *MHDictionaryForQueryString(NSString *string);
+extern UIImage *MHImageFromView(UIView *view);
 
 extern NSString *const MHYoutubeChannel;
 extern NSString *const MHGalleryViewModeShare;
@@ -43,7 +44,8 @@ extern NSString *const MHYoutubePlayBaseURL;
 extern NSString *const MHYoutubeBaseURL;
 extern NSString *const MHVimeoBaseURL;
 
-
-
-
+@interface SDImageCache (MHPrivateMethods)
+- (NSString *)defaultCachePathForKey:(NSString *)key;
+- (NSString *)cachedFileNameForKey:(NSString *)key;
+@end
 

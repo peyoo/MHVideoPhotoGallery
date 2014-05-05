@@ -36,11 +36,10 @@
     cellImageSnapshot.image = imageView.image;
     imageView.hidden = YES;
     
-    
-    if (!cellImageSnapshot.imageMH) {
+    if (!imageView.image) {
         UIView *view = [[UIView alloc]initWithFrame:fromViewController.view.frame];
         view.backgroundColor = [UIColor whiteColor];
-        cellImageSnapshot.image = [MHGallerySharedManager imageByRenderingView:view];
+        cellImageSnapshot.image = MHImageFromView(view);
     }
     [cellImageSnapshot setFrame:AVMakeRectWithAspectRatioInsideRect(cellImageSnapshot.imageMH.size, cellImageSnapshot.frame)];
     
@@ -98,9 +97,11 @@
             cellImageSnapshot.frame =[containerView convertRect:cellNew.thumbnail.frame fromView:cellNew.thumbnail.superview];
             cellImageSnapshot.contentMode = UIViewContentModeScaleAspectFill;
         } completion:^(BOOL finished) {
+            [toViewController.collectionView reloadData];
             [cellImageSnapshot removeFromSuperview];
             imageView.hidden = NO;
             cellNew.thumbnail.hidden =NO;
+            
             if (!videoIconsHidden) {
                 cellNew.videoGradient.hidden = NO;
                 cellNew.videoDurationLength.hidden =NO;
@@ -136,7 +137,7 @@
     if (!self.transitionImageView.imageMH) {
         UIView *view = [[UIView alloc]initWithFrame:fromViewController.view.frame];
         view.backgroundColor = [UIColor whiteColor];
-        self.transitionImageView.image = [MHGallerySharedManager imageByRenderingView:view];
+        self.transitionImageView.image =  MHImageFromView(view);
     }
     [self.transitionImageView setFrame:AVMakeRectWithAspectRatioInsideRect(self.transitionImageView.imageMH.size, self.transitionImageView.frame)];
     

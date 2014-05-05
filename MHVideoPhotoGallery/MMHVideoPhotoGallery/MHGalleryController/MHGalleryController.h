@@ -23,8 +23,20 @@
 
 @protocol MHGalleryDataSource<NSObject>
 
+
+
 @required
+/**
+ *  @param index which is currently needed
+ *
+ *  @return MHGalleryItem
+ */
 - (MHGalleryItem*)itemForIndex:(NSInteger)index;
+/**
+ *  @param galleryController
+ *
+ *  @return the number of Items you want to Display
+ */
 - (NSInteger)numberOfItemsInGallery:(MHGalleryController*)galleryController;
 @end
 
@@ -32,18 +44,44 @@
 
 @property (nonatomic,assign) id<MHGalleryDelegate>              galleryDelegate;
 @property (nonatomic,assign) id<MHGalleryDataSource>            dataSource;
+/**
+ *  From which index you want to present the Gallery.
+ */
 @property (nonatomic,assign) NSInteger                          presentationIndex;
 @property (nonatomic,strong) UIImageView                        *presentingFromImageView;
 @property (nonatomic,strong) MHGalleryImageViewerViewController *imageViewerViewController;
 @property (nonatomic,strong) MHOverviewController               *overViewViewController;
+/**
+ *  You can set an Array of GalleryItems or you can use the dataSource.
+ */
 @property (nonatomic,strong) NSArray                            *galleryItems;
+/**
+ *  Use transitionCustomization to Customize the GalleryControllers transitions
+ */
 @property (nonatomic,strong) MHTransitionCustomization          *transitionCustomization;
+/**
+ *  Use UICustomization to Customize the GalleryControllers UI
+ */
 @property (nonatomic,strong) MHUICustomization                  *UICustomization;
 @property (nonatomic,strong) MHTransitionPresentMHGallery       *interactivePresentationTransition;
 @property (nonatomic,assign) MHGalleryViewMode                  presentationStyle;
 @property (nonatomic,assign) UIStatusBarStyle                   preferredStatusBarStyleMH;
 
+/**
+ *  There are 3 types to present MHGallery. 
+ *
+ *  @param presentationStyle description of all 3 Types:  
+ *
+ *       MHGalleryViewModeImageViewerNavigationBarHidden: the NaviagtionBar and the Toolbar is hidden you can also set the backgroundcolor for this state in the UICustomization
+ *
+ *       MHGalleryViewModeImageViewerNavigationBarShown: the NavigationBar and the Toolbar is shown you can also set the backgroundcolor for this state in the UICustomization
+ *
+ *       MHGalleryViewModeOverView: presents the GalleryOverView.
+ *
+ *  @return MHGalleryController
+ */
 - (id)initWithPresentationStyle:(MHGalleryViewMode)presentationStyle;
++(instancetype)galleryWithPresentationStyle:(MHGalleryViewMode)presentationStyle;
 
 @property (nonatomic, copy) void (^finishedCallback)(NSUInteger currentIndex,UIImage *image,MHTransitionDismissMHGallery *interactiveTransition,MHGalleryViewMode viewMode);
 

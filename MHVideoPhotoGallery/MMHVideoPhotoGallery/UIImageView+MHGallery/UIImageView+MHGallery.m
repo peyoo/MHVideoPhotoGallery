@@ -8,6 +8,7 @@
 
 #import "UIImageView+MHGallery.h"
 #import "MHGallery.h"
+#import "SDImageCache.h"
 
 @implementation UIImageView (MHGallery)
 
@@ -48,38 +49,44 @@
         [MHGallerySharedManager.sharedManager getImageFromAssetLibrary:item.URLString
                                                              assetType:assetType
                                                           successBlock:^(UIImage *image, NSError *error) {
-                                                              if (!weakSelf) return;
-                                                              dispatch_main_sync_safe(^{
-                                                                  if (!weakSelf) return;
-                                                                  if (image){
-                                                                      weakSelf.image = image;
-                                                                      [weakSelf setNeedsLayout];
-                                                                  }
-                                                                  if (succeedBlock) {
-                                                                      succeedBlock(image,error);
-                                                                  }
-                                                              });
+                                                              [weakSelf setImageForImageView:image successBlock:succeedBlock];
                                                           }];
     }else if(item.image){
-        dispatch_main_sync_safe(^{
-            
-            weakSelf.image = item.image;
-            [weakSelf setNeedsLayout];
-            
-            if (succeedBlock) {
-                succeedBlock(item.image,nil);
-            }
-        });
-        
+        [self setImageForImageView:item.image successBlock:succeedBlock];
     }else{
-        [self setImageWithURL:[NSURL URLWithString:item.URLString] completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType) {
+        
+        NSString *placeholderURL = item.thumbnailURL;
+        NSString *toLoadURL = item.URLString;
+
+        if (imageType == MHImageTypeThumb) {
+            toLoadURL = item.thumbnailURL;
+            placeholderURL = item.URLString;
+        }
+        
+        [self setImageWithURL:[NSURL URLWithString:toLoadURL] placeholderImage:[SDImageCache.sharedImageCache imageFromDiskCacheForKey:placeholderURL] completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType) {
             if (succeedBlock) {
                 succeedBlock (image,error);
             }
         }];
     }
-    
 }
+
+
+-(void)setImageForImageView:(UIImage*)image
+               successBlock:(void (^)(UIImage *image,NSError *error))succeedBlock{
+    
+    __weak typeof(self) weakSelf = self;
+    
+    if (!weakSelf) return;
+    dispatch_main_sync_safe(^{
+        weakSelf.image = image;
+        [weakSelf setNeedsLayout];
+        if (succeedBlock) {
+            succeedBlock(image,nil);
+        }
+    });
+}
+
 
 
 @end

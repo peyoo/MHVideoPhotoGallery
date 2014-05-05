@@ -35,9 +35,11 @@
 		self.showMHShareViewInsteadOfActivityViewController = YES;
         self.useCustomBackButtonImageOnImageViewer = YES;
         self.showOverView = YES;
-        self.backgroundColorsForViewModes = [NSMutableDictionary  dictionaryWithDictionary:@{@"0":[UIColor blackColor],
-                                                                                             @"1" :[UIColor whiteColor],
-                                                                                             @"2": [UIColor whiteColor]}];
+        self.hideShare = NO;
+        self.backButtonState = MHBackButtonStateWithBackArrow;
+        self.backgroundColorsForViewModes = [NSMutableDictionary  dictionaryWithDictionary:@{@"0":UIColor.blackColor,
+                                                                                             @"1":UIColor.whiteColor,
+                                                                                             @"2":UIColor.whiteColor}];
         
         CGSize screenSize = UIScreen.mainScreen.bounds.size;
         UICollectionViewFlowLayout *flowLayoutLanscape = UICollectionViewFlowLayout.new;
