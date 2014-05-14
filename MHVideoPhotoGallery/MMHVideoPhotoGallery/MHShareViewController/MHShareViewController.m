@@ -857,7 +857,7 @@
                 [self addDataToDownloadArray:item.image];
             }else{
                 [SDWebImageManager.sharedManager downloadWithURL:[NSURL URLWithString:item.URLString]
-                                                         options:SDWebImageContinueInBackground
+                                                         options:0
                                                         progress:nil
                                                        completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType, BOOL finished) {
                                                            

@@ -289,7 +289,7 @@
 -(void)getImageForItem:(MHGalleryItem*)item
         finishCallback:(void(^)(UIImage *image))FinishBlock{
     [SDWebImageManager.sharedManager downloadWithURL:[NSURL URLWithString:item.URLString]
-                                             options:SDWebImageContinueInBackground
+                                             options:0
                                             progress:nil
                                            completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType, BOOL finished) {
                                                FinishBlock(image);

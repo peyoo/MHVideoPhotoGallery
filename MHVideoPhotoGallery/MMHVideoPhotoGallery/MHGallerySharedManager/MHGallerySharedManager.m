@@ -310,7 +310,7 @@
                                                    thumbURL = jsonData[@"data"][@"thumbnail"][@"sqDefault"];
                                                }
                                                [SDWebImageManager.sharedManager downloadWithURL:[NSURL URLWithString:thumbURL]
-                                                                                          options:SDWebImageContinueInBackground
+                                                                                          options:0
                                                                                          progress:nil
                                                                                         completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType, BOOL finished) {
                                                                                             
@@ -372,7 +372,7 @@
                                                    [self setObjectToUserDefaults:dictToSave];
                                                    
                                                    [SDWebImageManager.sharedManager downloadWithURL:[NSURL URLWithString:jsonData[0][quality]]
-                                                                                              options:SDWebImageContinueInBackground
+                                                                                              options:0
                                                                                              progress:nil
                                                                                             completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType, BOOL finished) {
                                                                                                 [[SDImageCache sharedImageCache] removeImageForKey:jsonData[0][quality]];
