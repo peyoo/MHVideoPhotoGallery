@@ -13,7 +13,7 @@ Pod::Spec.new do |s|
     :tag => 'v1.6'
   }
   
-  s.dependency "SDWebImage", "~> 3.5.2"
+  s.dependency "SDWebImage"
 
   s.frameworks = 'MessageUI','Social', 'ImageIO', 'QuartzCore', 'Accelerate','CoreMedia', 'AVFoundation','MediaPlayer'
 
